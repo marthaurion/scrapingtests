@@ -34,10 +34,10 @@ def load_manga_list(conn, cur):
             conn.rollback()
         else:
             conn.commit()
-            manga_metadata(conn, cur, item['i'])
-            ctr = ctr + 1
-            if ctr%100 == 0:
-                print ctr
+        manga_metadata(conn, cur, item['i'])
+        ctr = ctr + 1
+        if ctr%100 == 0:
+            print ctr
 
 # given a manga id load its metadata and chapter information
 def manga_metadata(conn, cur, manga_id):
@@ -97,7 +97,7 @@ def update_chapters(conn, cur, chaps, series_id):
             conn.rollback()
         else:
             conn.commit()
-            update_pages(conn, cur, chap[3])
+        update_pages(conn, cur, chap[3])
 
 def update_pages(conn, cur, chap_id):
     chapter_pages = "https://www.mangaeden.com/api/chapter/" + str(chap_id) + "/"
