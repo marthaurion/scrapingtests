@@ -1,9 +1,9 @@
 from bs4 import BeautifulSoup
 import requests
-from urlparse import urlparse
-import re
+# from urlparse import urlparse
+# import re
 
-MAX_LOOPS = 390 # max page for comic list
+MAX_LOOPS = 390  # max page for comic list
 
 #base_url = "http://www.batoto.net/search"
 #url = base_url+"?&p="+str(i)
@@ -15,7 +15,7 @@ data = r.text
 soup = BeautifulSoup(data)
 
 #print soup.prettify()
-print soup;
+print soup
 
 #anime = soup.find_all(href=re.compile("view"))
 #to_download = set()

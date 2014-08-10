@@ -1,30 +1,30 @@
 from bs4 import BeautifulSoup
 import requests
-from urlparse import urlparse
+# from urlparse import urlparse
 import re
 
-FOLLOWED_SHOWS = ["Akame ga Kill", "Blade Dance", "Gundam SEED Destiny"]
-FANSUBS = ["HorribleSubs", "Commie", "Hatsuyuki"]
+FOLLOWED_SHOWS = {"Sword Art Online": ["Commie", "HorribleSubs"],
+                  "Aldnoah": ["HorribleSubs", "Commie"],
+                  "Majimoji Rurumo": ["HorribleSubs"]}
 MAX_LOOPS = 10
 
-def valid_download(input):
-    # standard check for null and make sure the filetype is mkv
-    if input is None or ".mkv" not in input:
+
+def valid_download(file_name):
+    # standard check for null and make sure the file type is mkv
+    if file_name is None or ".mkv" not in file_name:
         return False
     found = False
 
+    if "[480p]" in file_name or "[1080p]" in file_name:
+        return False
+
     # check a list of followed shows
-    for show in FOLLOWED_SHOWS:
-        if show in input:
-            found = True
+    for key in FOLLOWED_SHOWS:
+        for show in FOLLOWED_SHOWS[key]:
+            if key in file_name and "["+show+"]" in file_name:
+                found = True
 
-    # check a list of fansub groups
-    for sub in FANSUBS:
-        if sub in input:
-            found = True
-
-    # right now, using OR logic for fansub groups and episode titles
-    # might need to change this later to be more specific
+    # this weird style is in case I want to add logic after this
     if not found:
         return False
 
@@ -47,8 +47,8 @@ for i in range(1, MAX_LOOPS):
     to_download = set()
 
     for element in anime:
-        dl_link = str(element['href']).replace("?page=view","?page=download")
-        text = element.getText().replace("_"," ")
+        dl_link = str(element['href']).replace("?page=view", "?page=download")
+        text = element.getText().replace("_", " ")
         if valid_download(text):
             print dl_link, text
             to_download.add(dl_link)
