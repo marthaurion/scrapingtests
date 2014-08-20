@@ -6,6 +6,15 @@ import psycopg2
 import sys
 
 
+def check_manga_count():
+    manga_list = "https://www.mangaeden.com/api/list/0/"
+    r = requests.get(manga_list)
+    data = r.text
+
+    result = json.loads(data)
+    print len(result)
+
+
 def load_manga_list(con, cursor):
     manga_list = "https://www.mangaeden.com/api/list/0/"
     r = requests.get(manga_list)
@@ -147,6 +156,7 @@ cur = conn.cursor()
 
 if len(sys.argv) < 2:
     load_manga_list(conn, cur)
+    #check_manga_count()
 elif len(sys.argv) == 2:
     title = str(sys.argv[1])
     update_chapters(conn, cur, title)
