@@ -51,6 +51,6 @@ create table manga.pages (
 	chap_id integer not null,
 	page_num integer not null,
 	page_url character varying(80) not null UNIQUE,
-	primary key(chapter_id, page_num),
-	foreign key(chapter_id) references manga.chapters(id)
+	primary key(chap_id, page_num),
+	foreign key(chap_id) references manga.chapters(id)
 		on delete cascade on update cascade);
