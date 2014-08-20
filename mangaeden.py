@@ -3,6 +3,7 @@ import requests
 #import re
 import json
 import psycopg2
+import sys
 
 
 def load_manga_list(con, cursor):
@@ -24,7 +25,6 @@ def load_manga_list(con, cursor):
     else:
         source_id = temp_source[0]
 
-    ctr = 0
     query = "INSERT INTO manga.series(manga_id, title, alias, image_url, source_site) values(%s, %s, %s, %s, %s);"
     for item in result['manga']:
         # loop through all items in the manga list and insert them into the manga database if they don't exist already
@@ -39,10 +39,10 @@ def load_manga_list(con, cursor):
 
 # given a manga id load its metadata and chapter information
 def manga_metadata(con, cursor, manga_name):
-	cursor.execute("SELECT manga_id FROM manga.series WHERE title = %", (manga_name,))
-	manga_id = cursor.fetchone()[0]
-	if manga_id is None:
-		return
+    cursor.execute("SELECT manga_id FROM manga.series WHERE title = %", (manga_name,))
+    manga_id = cursor.fetchone()[0]
+    if manga_id is None:
+        return
 
     # get metadata about each specific manga and a chapter list
     manga_info_base = "https://www.mangaeden.com/api/manga/" + str(manga_id) + "/"
@@ -102,6 +102,7 @@ def update_chapters(con, cursor, chaps, series_id):
             con.rollback()
         else:
             con.commit()
+            update_pages(con, cursor, chap[3])
 
 
 def update_pages(con, cursor, chap_id):
@@ -123,10 +124,13 @@ def update_pages(con, cursor, chap_id):
 conn = psycopg2.connect("dbname=scratchdb user=marth")
 cur = conn.cursor()
 
-load_manga_list(conn, cur)
+comm = int(sys.argv[1])
+title = str(sys.argv[2])
 
-#get image urls for chapter pages for each chapter
-#chapter_pages = "https://www.mangaeden.com/api/chapter/" # add chapter.id at the end of the url to get the chapter info
+if title is None:
+    load_manga_list(conn, cur)
+else:
+    manga_metadata(conn, cur, title)
 
 cur.close()
 conn.close()
