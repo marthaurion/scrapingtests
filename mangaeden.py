@@ -39,9 +39,11 @@ def load_manga_list(con, cursor):
 
 # given a manga id load its metadata and chapter information
 def manga_metadata(con, cursor, manga_name):
-    cursor.execute("SELECT manga_id FROM manga.series WHERE title = %", (manga_name,))
-    manga_id = cursor.fetchone()[0]
-    if manga_id is None:
+    cursor.execute("SELECT manga_id FROM manga.series WHERE title = %s", (manga_name,))
+    result = cursor.fetchone()
+    if result is not None:
+        manga_id = result[0]
+    else:
         return
 
     # get metadata about each specific manga and a chapter list
@@ -63,16 +65,29 @@ def manga_metadata(con, cursor, manga_name):
 # might be better to do this as a separate function to call separately from the main batch
 def update_categories(con, cursor, cats, series_id):
     for cat in cats:
-        # first try to add the category if it doesn't exist
-        try:
-            cursor.execute("INSERT INTO manga.categories(title) VALUES(%s);", (cat,))
-        except psycopg2.IntegrityError:
-            con.rollback()
-        else:
-            con.commit()
-
+        # first check whether the category is already in the database
         cursor.execute("SELECT id FROM manga.categories WHERE title = %s;", (cat,))
-        cat_id = cursor.fetchone()[0]
+        result = cursor.fetchone()
+
+        # add the category if it doesn't exist
+        if result is None:
+            try:
+                cursor.execute("INSERT INTO manga.categories(title) VALUES(%s);", (cat,))
+            except psycopg2.IntegrityError:
+                con.rollback()
+            else:
+                con.commit()
+
+            # now we should be able to get a category id
+            cursor.execute("SELECT id FROM manga.categories WHERE title = %s;", (cat,))
+            cat_id = cursor.fetchone()[0]
+        else:
+            cat_id = result[0]
+
+        # random error checking
+        if cat_id is None:
+            print "CATEGORY IS STILL NOT FOUND."
+            return
 
         # now associate with series
         query = "INSERT INTO manga.ser_cat_r(series_id, category_id) VALUES(%s, %s);"
@@ -124,12 +139,10 @@ def update_pages(con, cursor, chap_id):
 conn = psycopg2.connect("dbname=scratchdb user=marth")
 cur = conn.cursor()
 
-comm = int(sys.argv[1])
-title = str(sys.argv[2])
-
-if title is None:
+if len(sys.argv) < 2:
     load_manga_list(conn, cur)
-else:
+elif len(sys.argv) == 2:
+    title = str(sys.argv[1])
     manga_metadata(conn, cur, title)
 
 cur.close()
