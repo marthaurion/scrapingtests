@@ -35,14 +35,15 @@ def load_manga_list(con, cursor):
             con.rollback()
         else:
             con.commit()
-        manga_metadata(con, cursor, item['i'])
-        ctr += 1
-        if ctr % 100 == 0:
-            print ctr
 
 
 # given a manga id load its metadata and chapter information
-def manga_metadata(con, cursor, manga_id):
+def manga_metadata(con, cursor, manga_name):
+	cursor.execute("SELECT manga_id FROM manga.series WHERE title = %", (manga_name,))
+	manga_id = cursor.fetchone()[0]
+	if manga_id is None:
+		return
+
     # get metadata about each specific manga and a chapter list
     manga_info_base = "https://www.mangaeden.com/api/manga/" + str(manga_id) + "/"
     result = json.loads(requests.get(manga_info_base).text)
@@ -101,7 +102,6 @@ def update_chapters(con, cursor, chaps, series_id):
             con.rollback()
         else:
             con.commit()
-        update_pages(con, cursor, chap[3])
 
 
 def update_pages(con, cursor, chap_id):
