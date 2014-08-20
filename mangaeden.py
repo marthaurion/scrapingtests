@@ -35,17 +35,11 @@ def load_manga_list(con, cursor):
             con.rollback()
         else:
             con.commit()
+            manga_metadata(con, cursor, item['i'])
 
 
 # given a manga id load its metadata and chapter information
-def manga_metadata(con, cursor, manga_name):
-    cursor.execute("SELECT manga_id FROM manga.series WHERE title = %s", (manga_name,))
-    result = cursor.fetchone()
-    if result is not None:
-        manga_id = result[0]
-    else:
-        return
-
+def manga_metadata(con, cursor, manga_id):
     # get metadata about each specific manga and a chapter list
     manga_info_base = "https://www.mangaeden.com/api/manga/" + str(manga_id) + "/"
     result = json.loads(requests.get(manga_info_base).text)
@@ -58,8 +52,6 @@ def manga_metadata(con, cursor, manga_name):
     series_id = cursor.fetchone()[0]
 
     update_categories(con, cursor, result['categories'], series_id)
-
-    update_chapters(con, cursor, result['chapters'], series_id)
 
 
 # might be better to do this as a separate function to call separately from the main batch
@@ -99,7 +91,21 @@ def update_categories(con, cursor, cats, series_id):
             con.commit()
 
 
-def update_chapters(con, cursor, chaps, series_id):
+def update_chapters(con, cursor, manga_name):
+    cursor.execute("SELECT id, manga_id FROM manga.series WHERE title = %s", (manga_name,))
+    result = cursor.fetchone()
+    if result is not None:
+        manga_id = result[1]
+        series_id = result[0]
+    else:
+        return
+
+    # get metadata about each specific manga and a chapter list
+    manga_info_base = "https://www.mangaeden.com/api/manga/" + str(manga_id) + "/"
+    result = json.loads(requests.get(manga_info_base).text)
+
+    chaps = result['chapters']
+
     # quick error check
     if chaps is None or len(chaps) < 1:
         return
@@ -143,7 +149,7 @@ if len(sys.argv) < 2:
     load_manga_list(conn, cur)
 elif len(sys.argv) == 2:
     title = str(sys.argv[1])
-    manga_metadata(conn, cur, title)
+    update_chapters(conn, cur, title)
 
 cur.close()
 conn.close()
