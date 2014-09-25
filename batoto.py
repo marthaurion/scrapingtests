@@ -1,31 +1,31 @@
 from bs4 import BeautifulSoup
 import requests
-# from urlparse import urlparse
-# import re
+import re
+import psycopg2
 
-MAX_LOOPS = 390  # max page for comic list
+#MAX_LOOPS = 390  # max page for comic list
+MAX_LOOPS = 4
 
-#base_url = "http://www.batoto.net/search"
-#url = base_url+"?&p="+str(i)
+conn = psycopg2.connect("dbname=mangadb user=marth")
+cur = conn.cursor()
 
-url = "http://www.batoto.net/search"
+for i in range(MAX_LOOPS):
+    base_url = "http://www.batoto.net/search"
+    url = base_url+"?&p="+str(i)
 
-r = requests.get(url)
-data = r.text
-soup = BeautifulSoup(data)
+    r = requests.get(url)
+    data = r.text
+    soup = BeautifulSoup(data)
 
-#print soup.prettify()
-print soup
+    #print soup.prettify()
+    #print soup
 
-#anime = soup.find_all(href=re.compile("view"))
-#to_download = set()
+    anime = soup.find_all(href=re.compile("comic"))
 
-#for element in anime:
-#    dl_link = str(element['href']).replace("?page=view","?page=download")
-#    text = element.getText().replace("_"," ")
-#    if valid_download(text):
-#        print dl_link, text
-#        to_download.add(dl_link)
+    for element in anime:
+        print element['href']
+        print element.getText().encode('ascii','xmlcharrefreplace')
 
-#parsed_link = urlparse(link)
-#base_link = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_link)
+
+cur.close()
+conn.close()

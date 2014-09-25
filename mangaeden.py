@@ -12,7 +12,7 @@ def check_manga_count():
     data = r.text
 
     result = json.loads(data)
-    print len(result)
+    print len(result['manga'])
 
 
 def load_manga_list(con, cursor):
@@ -38,6 +38,10 @@ def load_manga_list(con, cursor):
     for item in result['manga']:
         # loop through all items in the manga list and insert them into the manga database if they don't exist already
         try:
+            cursor.execute("SELECT id FROM series WHERE manga_id = %s;", (item['i'],))
+            temp = cursor.fetchone()
+            if temp is not None:
+                continue
             cursor.execute(query, (item['i'], item['t'].encode('utf8'), item['a'], item['im'], source_id))
         # the intent is that this will skip an insert if a duplicate key is found
         except psycopg2.IntegrityError:
