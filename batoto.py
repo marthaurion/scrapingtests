@@ -11,7 +11,7 @@ for i in range(MAX_LOOPS):
 
     r = requests.get(url)
     data = r.text
-    soup = BeautifulSoup(data)
+    soup = BeautifulSoup(data, "html.parser")
 
     #print soup.prettify()
     #print soup
@@ -19,5 +19,5 @@ for i in range(MAX_LOOPS):
     anime = soup.find_all(href=re.compile("comic"))
 
     for element in anime:
-        print element['href']
-        print element.getText().encode('ascii','xmlcharrefreplace')
+        print(element['href'])
+        print(element.getText().encode('ascii','xmlcharrefreplace'))
