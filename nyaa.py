@@ -4,13 +4,10 @@ import re
 import os
 import urllib
 
-FOLLOWED_SHOWS = {"Sword Art Online": ["Commie", "HorribleSubs"],
-                  "Aldnoah": ["HorribleSubs", "Commie"],
-                  "Majimoji Rurumo": ["HorribleSubs"],
-                  "Prisma Ilya": ["HorribleSubs", "UTW"],
-                  "Hanayamata": ["HorribleSubs"],
-                  "Mahouka": ["HorribleSubs"],
-                  "Captain Earth": ["HorribleSubs"]}
+FOLLOWED_SHOWS = {"Teekyu": ["Commie", "HorribleSubs"],
+                  "Joukamachi no Dandelion": ["HorribleSubs"],
+				  "Million Doll": ["HorribleSubs"],
+                  "Jitsu wa Watashi wa": ["HorribleSubs"]}
 MAX_LOOPS = 20
 
 
@@ -38,14 +35,12 @@ def download_anime(show_list, base_url, base_dir):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    random_file = urllib.URLopener()
-
     for i in range(1, MAX_LOOPS):
         url = base_url+"&offset="+str(i)
 
         r = requests.get(url)
         data = r.text
-        soup = BeautifulSoup(data)
+        soup = BeautifulSoup(data, "html.parser")
 
         anime = soup.find_all(href=re.compile("view"))
 
@@ -53,23 +48,28 @@ def download_anime(show_list, base_url, base_dir):
             dl_link = str(element['href']).replace("?page=view", "?page=download")
             text = element.getText().replace("_", " ")
             if valid_download(text, show_list):
-                print dl_link, text
+                print (dl_link, text)
                 # if we haven't downloaded the files, download them
-                if not os.path.exists(dirname + text):
-                    random_file.retrieve(dl_link, dirname + text)
+                filename = dirname + text + ".torrent"
+                if not os.path.exists(filename):
+                    with urllib.request.urlopen(dl_link) as response, open(filename, 'wb') as out_file:
+                        data = response.read()
+                        out_file.write(data)
 
-def browse_site(base_url):
-    r = requests.get(base_url)
-    data = r.text
-    soup = BeautifulSoup(data)
+def browse_site(base_url, loops=1):
+    for i in range(1, loops+1):
+        url = base_url+"&offset="+str(i)
+        r = requests.get(url)
+        data = r.text
+        soup = BeautifulSoup(data, "html.parser")
 
-    anime = soup.find_all(href=re.compile("view"))
-    for element in anime:
-        text = element.getText().replace("_", " ").encode("utf8")
-        print text
+        anime = soup.find_all(href=re.compile("view"))
+        for element in anime:
+            text = element.getText().replace("_", " ").encode("utf8")
+            print(text)
 
 wurl = "http://www.nyaa.se/?cats=1_37"  # category for english-translated anime
 wdir = os.getcwd()
 
-#browse_site(wurl)
+#browse_site(wurl,2)
 download_anime(FOLLOWED_SHOWS, wurl, wdir)
